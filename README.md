@@ -48,10 +48,10 @@ Simple Rules!
 
 ### 2. Modifying the Script
 - Copy the Snapify script provided below and paste it into the console.
-- Update the `xpaths` array with the XPaths relevant to your Snapchat interface.
+- Update the `xpaths` array with the FULL XPaths relevant to your Snapchat interface.
 
 ### 3. Gathering XPaths
-To collect the XPaths for elements on the Snapchat interface:
+To collect the FULL XPaths for elements on the Snapchat interface:
 
 1. In the **Elements** tab of Developer Tools, right-click on the desired element (e.g., buttons for camera, making a snap, sending).
    
@@ -64,11 +64,11 @@ To collect the XPaths for elements on the Snapchat interface:
 3. Paste the copied XPath below the `// Add more XPaths for friends here` comment in the script.
 
 ### 4. Running the Script
-- After updating the XPaths, run the script in the console.
+- After updating the FULL XPaths, run the script in the console.
 - The script will continuously attempt to click the specified elements every second.
 
 ### 5. Example XPaths
-The default XPaths included in the script are as follows:
+The default FULL XPaths included in the script are as follows:
 <img align="left" src="https://imgur.com/GEt4ush.png" width=315 height=500>
 ```javascript
 const xpaths = [
