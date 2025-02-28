@@ -373,25 +373,13 @@
                 return;
             }
             
-            const rect = element.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            // Simuler le mouvement de la souris
-            const mouseoverEvent = new MouseEvent('mouseover', {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                clientX: centerX,
-                clientY: centerY
-            });
-            
-            element.dispatchEvent(mouseoverEvent);
-            
-            // Petit délai avant le clic pour que cela semble naturel
-            setTimeout(() => {
-                // Simuler le clic
-                const clickEvent = new MouseEvent('click', {
+            try {
+                const rect = element.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                // Simuler le mouvement de la souris
+                const mouseoverEvent = new MouseEvent('mouseover', {
                     bubbles: true,
                     cancelable: true,
                     view: window,
@@ -399,20 +387,50 @@
                     clientY: centerY
                 });
                 
-                element.dispatchEvent(clickEvent);
-                updateCounter();
+                element.dispatchEvent(mouseoverEvent);
                 
-                // Simuler le mouseout après le clic
+                // Petit délai avant le clic pour que cela semble naturel
                 setTimeout(() => {
-                    const mouseoutEvent = new MouseEvent('mouseout', {
-                        bubbles: true,
-                        cancelable: true,
-                        view: window
-                    });
-                    element.dispatchEvent(mouseoutEvent);
-                    resolve(true);
-                }, Math.random() * 150 + 50);
-            }, Math.random() * 300 + 100);
+                    try {
+                        // Simuler le clic
+                        const clickEvent = new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window,
+                            clientX: centerX,
+                            clientY: centerY
+                        });
+                        
+                        element.dispatchEvent(clickEvent);
+                        
+                        // Essayer également d'appeler directement la méthode click() comme fallback
+                        try {
+                            element.click();
+                        } catch (e) {
+                            // Ignorer cette erreur, on a déjà essayé avec dispatchEvent
+                        }
+                        
+                        updateCounter();
+                        
+                        // Simuler le mouseout après le clic
+                        setTimeout(() => {
+                            const mouseoutEvent = new MouseEvent('mouseout', {
+                                bubbles: true,
+                                cancelable: true,
+                                view: window
+                            });
+                            element.dispatchEvent(mouseoutEvent);
+                            resolve(true);
+                        }, Math.random() * 150 + 50);
+                    } catch (error) {
+                        console.error("Erreur lors du clic:", error);
+                        resolve(false);
+                    }
+                }, Math.random() * 300 + 100);
+            } catch (error) {
+                console.error("Erreur lors de la simulation du clic:", error);
+                resolve(false);
+            }
         });
     }
     
@@ -422,8 +440,8 @@
             name: "enableCamera",
             description: "Bouton d'activation de la caméra",
             xpaths: [
-                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/button",
-                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/button"
+                '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/button',
+                '/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/button'
             ],
             selectors: [".camera-enable", "button.primary[type='button']"],
             textContains: ["Activer", "Camera", "Caméra"],
@@ -433,8 +451,8 @@
             name: "captureButton",
             description: "Bouton de capture",
             xpaths: [
-                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]",
-                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]"
+                '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]',
+                '/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]'
             ],
             selectors: [".capture-button", "button.capture"],
             textContains: ["Prendre", "Capture", "Photo"],
@@ -444,37 +462,40 @@
             name: "sendButton",
             description: "Bouton d'envoi",
             xpaths: [
-                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[2]/div[2]/button[3]",
-                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[2]/div[2]/button[3]",
-                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[2]/div[2]/button[2]"
+                '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[2]/div[2]/button[3]',
+                '/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[2]/div[2]/button[3]'
             ],
-            selectors: [".send-button", "button.send"],
-            textContains: ["Envoyer", "Send", "Suivant"],
-            attributes: [{ name: "type", value: "submit" }]
+            selectors: ["button.send", "button.primary"],
+            textContains: ["Envoyer", "Send"],
+            attributes: [{ name: "aria-label", value: "send" }]
         },
         {
             name: "recipientElement",
-            description: "Élément de liste (destinataire)",
+            description: "Sélection du destinataire",
             xpaths: [
-                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div/ul/li[8]/div",
-                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/form/div/ul/li[8]/div"
+                '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div/ul/li[8]/div',
+                '//li[contains(@class, "recipient")]'
             ],
-            selectors: ["li.recipient", ".recipient-option"],
-            textContains: [],
-            attributes: [{ name: "class", value: "recipient" }]
+            selectors: ["li.recipient", "div.recipient-item"],
+            textContains: ["Destinataire", "Recipient"],
+            attributes: [{ name: "role", value: "option" }]
         },
         {
             name: "confirmButton",
-            description: "Bouton de confirmation final",
+            description: "Bouton de confirmation",
             xpaths: [
-                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button",
-                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button"
+                '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button',
+                '//button[contains(@class, "confirm") or contains(text(), "Confirmer")]'
             ],
-            selectors: ["button.confirm", "form button[type='submit']"],
-            textContains: ["Confirmer", "Valider", "Submit", "Soumettre"],
+            selectors: ["button.confirm", "button.primary"],
+            textContains: ["Confirmer", "Confirm", "OK"],
             attributes: [{ name: "type", value: "submit" }]
         }
     ];
+    
+    // Ajouter un système de compteur de tentatives et de limite
+    let attemptCounters = [0, 0, 0, 0, 0];
+    const MAX_ATTEMPTS = 5;
     
     // Recherche avancée avec toutes les méthodes disponibles
     function findElement(elementDef) {
@@ -525,44 +546,49 @@
     async function clickAllSpecificElements() {
         const specificButtons = [];
         
-        // 1. Chercher tous les boutons avec des icônes SVG
-        document.querySelectorAll('button svg, [role="button"] svg').forEach(svg => {
-            const button = svg.closest('button') || svg.closest('[role="button"]');
-            if (button && isElementVisible(button)) {
-                specificButtons.push(button);
-            }
-        });
-        
-        // 2. Chercher des éléments de liste (li) cliquables
-        document.querySelectorAll('li[tabindex="0"], li.clickable, li[role="option"]').forEach(li => {
+        // 1. Chercher spécifiquement les éléments de liste qui ressemblent à des destinataires
+        document.querySelectorAll('li[role="option"], li.recipient, li[tabindex="0"]').forEach(li => {
             if (isElementVisible(li)) {
                 specificButtons.push(li);
             }
         });
         
-        // 3. Chercher des div cliquables
-        document.querySelectorAll('div[tabindex="0"], div[role="button"], div.clickable').forEach(div => {
+        // 2. Chercher des div qui pourraient être des destinataires
+        document.querySelectorAll('div[role="option"], div.recipient-item').forEach(div => {
             if (isElementVisible(div)) {
                 specificButtons.push(div);
             }
         });
         
+        // 3. Chercher tous les boutons avec des icônes SVG (fallback)
         if (specificButtons.length === 0) {
-            addLog("Aucun élément spécifique trouvé");
+            document.querySelectorAll('button svg, [role="button"] svg').forEach(svg => {
+                const button = svg.closest('button') || svg.closest('[role="button"]');
+                if (button && isElementVisible(button)) {
+                    specificButtons.push(button);
+                }
+            });
+        }
+        
+        if (specificButtons.length === 0) {
+            addLog("Aucun destinataire trouvé");
             return false;
         }
         
-        addLog(`${specificButtons.length} éléments spécifiques trouvés`);
+        addLog(`${specificButtons.length} destinataires potentiels trouvés`);
         
-        // Cliquer sur chaque élément
-        for (let i = 0; i < specificButtons.length; i++) {
+        // Limiter le nombre de destinataires à cliquer (pour éviter de cliquer sur trop d'éléments)
+        const maxToClick = Math.min(3, specificButtons.length);
+        
+        // Cliquer sur quelques éléments seulement
+        for (let i = 0; i < maxToClick; i++) {
             if (!isClicking) return false;
             
             const element = specificButtons[i];
             const clicked = await simulateHumanClick(element);
             
             if (clicked) {
-                addLog(`Élément spécifique ${i+1}/${specificButtons.length} cliqué`);
+                addLog(`Destinataire ${i+1}/${maxToClick} cliqué`);
             }
             
             await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100));
@@ -579,31 +605,53 @@
         updateStatus("En cours d'exécution...", true);
         
         try {
-            // Séquence améliorée avec détection plus robuste
-            for (const elementDef of elementDefinitions) {
+            // Séquence améliorée avec détection plus robuste et gestion des tentatives
+            for (let i = 0; i < elementDefinitions.length; i++) {
                 if (!isClicking) return;
                 
+                const elementDef = elementDefinitions[i];
                 addLog(`Recherche de: ${elementDef.description}...`);
-                const element = findElement(elementDef);
                 
-                if (element) {
-                    addLog(`${elementDef.description} trouvé, clic en cours...`);
-                    await simulateHumanClick(element);
+                let element = null;
+                let attempts = 0;
+                
+                // Essayer plusieurs fois de trouver l'élément
+                while (!element && attempts < MAX_ATTEMPTS && isClicking) {
+                    element = findElement(elementDef);
                     
-                    // Si c'est l'élément de liste, essayer également de cliquer sur des éléments spécifiques
-                    if (elementDef.name === "recipientElement") {
-                        await clickAllSpecificElements();
+                    if (element) {
+                        addLog(`${elementDef.description} trouvé, clic en cours...`);
+                        await simulateHumanClick(element);
+                        attemptCounters[i] = 0; // Réinitialiser le compteur si succès
+                        
+                        // Si c'est l'élément de liste, essayer également de cliquer sur des éléments spécifiques
+                        if (elementDef.name === "recipientElement") {
+                            await new Promise(resolve => setTimeout(resolve, 500)); // Attendre que la liste se charge
+                            await clickAllSpecificElements();
+                        }
+                        
+                        // Pause variable entre les clics
+                        await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 500));
+                    } else {
+                        attempts++;
+                        attemptCounters[i]++;
+                        
+                        if (attempts >= MAX_ATTEMPTS || attemptCounters[i] >= MAX_ATTEMPTS * 2) {
+                            addLog(`Trop de tentatives pour ${elementDef.description}, passage à l'étape suivante`);
+                            attemptCounters[i] = 0; // Réinitialiser pour la prochaine fois
+                            break; // Passer à l'élément suivant
+                        }
+                        
+                        addLog(`${elementDef.description} non trouvé, tentative ${attempts}/${MAX_ATTEMPTS}`);
+                        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
                     }
-                    
-                    // Pause variable entre les clics
-                    await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 500));
-                } else {
-                    addLog(`${elementDef.description} non trouvé`);
-                    
-                    // Si l'élément de liste n'est pas trouvé, tenter une recherche générique
-                    if (elementDef.name === "recipientElement") {
-                        await clickAllSpecificElements();
-                    }
+                }
+                
+                // Si on n'a pas trouvé l'élément de liste après plusieurs tentatives, essayer une recherche générique
+                if (!element && elementDef.name === "recipientElement") {
+                    addLog("Tentative de recherche générique de destinataires...");
+                    await clickAllSpecificElements();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
             
@@ -620,13 +668,23 @@
                 } else {
                     addLog("Processus terminé, redémarrage...");
                 }
-                performClicks();
+                
+                // Réinitialiser tous les compteurs de tentatives
+                attemptCounters = [0, 0, 0, 0, 0];
+                
+                // Petite pause avant de recommencer
+                setTimeout(() => {
+                    performClicks();
+                }, Math.random() * 2000 + 1000);
             }
         } catch (error) {
             addLog(`Erreur: ${error.message}`);
             console.error("Erreur durant le processus:", error);
             
             if (isClicking) {
+                // Réinitialiser tous les compteurs de tentatives
+                attemptCounters = [0, 0, 0, 0, 0];
+                
                 processTimeout = setTimeout(() => {
                     addLog("Tentative de reprise après erreur...");
                     performClicks();

@@ -54,6 +54,10 @@ const alternativeXpaths = {
 
 // Variable pour suivre le dernier index traité
 let lastProcessedIndex = -1;
+// Ajouter un compteur de tentatives pour chaque étape
+let attemptCounters = [0, 0, 0, 0, 0];
+// Nombre maximum de tentatives avant de passer à l'étape suivante
+const MAX_ATTEMPTS = 5;
 
 // Fonction pour cliquer sur les éléments avec un comportement plus naturel
 function processNextElement() {
@@ -71,6 +75,19 @@ function processNextElement() {
     
     if (!elementClicked) {
         console.log(`Élément ${lastProcessedIndex} non trouvé, réessai plus tard`);
+        attemptCounters[lastProcessedIndex]++;
+        
+        // Si nous avons dépassé le nombre maximum de tentatives pour cette étape
+        if (attemptCounters[lastProcessedIndex] >= MAX_ATTEMPTS) {
+            console.log(`Trop de tentatives pour l'étape ${lastProcessedIndex}, passage à l'étape suivante`);
+            // Réinitialiser le compteur pour cette étape
+            attemptCounters[lastProcessedIndex] = 0;
+            // Passer à l'étape suivante
+            lastProcessedIndex = (lastProcessedIndex + 1) % xpaths.length;
+        }
+    } else {
+        // Réinitialiser le compteur de tentatives si le clic a réussi
+        attemptCounters[lastProcessedIndex] = 0;
     }
     
     // Programmer le prochain clic avec un délai variable
@@ -80,9 +97,9 @@ function processNextElement() {
     if (Math.random() < 0.2) { // 20% de chance d'ajouter une pause
         const pauseDuration = Math.random() * 5000 + 2000; // Pause de 2-7 secondes
         console.log(`Courte pause de ${Math.round(pauseDuration/1000)} secondes...`);
-        setTimeout(processNextElement, nextDelay + pauseDuration);
+        window.processTimeoutId = setTimeout(processNextElement, nextDelay + pauseDuration);
     } else {
-        setTimeout(processNextElement, nextDelay);
+        window.processTimeoutId = setTimeout(processNextElement, nextDelay);
     }
 }
 
