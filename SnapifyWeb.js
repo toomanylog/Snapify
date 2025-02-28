@@ -11,14 +11,11 @@ function clickElementByXPath(xpath) {
 
 // Define a list of XPath elements to click on
 const xpaths = [
-    '/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/div/div/div/button[1]',// enable cam
-    '/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/div[2]/div[2]/div/div[1]/button[1]', // capture
-    '/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[2]/div[2]/button[2]', //send to
-    '/html/body/main/div[1]/div[2]/div/div/div/div/div[1]/div/div/div/div/div[1]/form/ul/li[1005]/div',// you can change this xpath to be someone elses
-    '/html/body/main/div[1]/div[2]/div/div/div/div/div[1]/div/div/div/div/div[1]/form/ul/li[1003]/div',// you can change this xpath to be someone elses
-    '/html/body/main/div[1]/div[2]/div/div/div/div/div[1]/div/div/div/div/div[1]/form/ul/li[1002]/div', // you can change this xpath to be someone elses
-    // from this line you can add as many other xpaths of users
-    '/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button',
+    '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/button',// enable cam
+    '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]', // capture
+    '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[2]/div[2]/button[3]', //send to
+    '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div/ul/li[8]/div',// you can change this xpath to be someone elses
+    '/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button',
 ];
 
 // Define a function to click all elements in the list
