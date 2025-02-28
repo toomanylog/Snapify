@@ -300,7 +300,9 @@
         }
     }
     
-    // Fonction pour obtenir un élément par XPath avec une meilleure gestion d'erreurs
+    // Méthodes de détection des éléments
+    
+    // 1. XPath (méthode principale)
     function getElementByXPath(xpath, contextNode = document) {
         try {
             const result = document.evaluate(
@@ -312,9 +314,33 @@
             );
             return result.singleNodeValue;
         } catch (error) {
-            console.log(`Erreur XPath: ${error.message}`);
+            addLog(`Erreur XPath: ${error.message}`);
             return null;
         }
+    }
+    
+    // 2. Sélecteurs CSS (méthode complémentaire)
+    function getElementBySelector(selector) {
+        try {
+            return document.querySelector(selector);
+        } catch (error) {
+            return null;
+        }
+    }
+    
+    // 3. Détection par texte du bouton
+    function getButtonByText(text) {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        return buttons.find(button => 
+            button.textContent.includes(text) || 
+            button.innerText.includes(text) ||
+            button.getAttribute('aria-label')?.includes(text)
+        );
+    }
+    
+    // 4. Détection par attributs
+    function getElementByAttribute(attribute, value) {
+        return document.querySelector(`[${attribute}*="${value}"]`);
     }
     
     // Fonction pour vérifier si un élément est visible
@@ -340,7 +366,7 @@
     }
     
     // Fonction pour simuler un comportement de clic humain
-    function simulateHumanClick(element) {
+    async function simulateHumanClick(element) {
         return new Promise((resolve) => {
             if (!element || !isElementVisible(element)) {
                 resolve(false);
@@ -390,89 +416,162 @@
         });
     }
     
-    // XPaths mis à jour (versions multiples pour plus de robustesse)
-    const xpathMap = {
-        // Bouton d'activation de la caméra
-        enableCamera: [
-            "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/div/div/div/button[1]",
-            "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/button",
-            "//button[contains(text(), 'Activer') or contains(@class, 'camera')]"
-        ],
-        // Bouton de capture
-        captureButton: [
-            "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/div[2]/div[2]/div/div[1]/button[1]",
-            "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]",
-            "//button[contains(@class, 'capture') or contains(text(), 'Prendre')]"
-        ],
-        // Bouton d'envoi
-        sendButton: [
-            "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[2]/div[2]/button[2]",
-            "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[2]/div[2]/button[3]",
-            "//button[contains(text(), 'Envoyer') or contains(@class, 'send')]"
-        ],
-        // Bouton de confirmation final
-        confirmButton: [
-            "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button",
-            "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button",
-            "//button[contains(@class, 'submit') or contains(text(), 'Confirmer')]"
-        ]
-    };
+    // Définition des éléments à trouver avec plusieurs méthodes de détection
+    const elementDefinitions = [
+        {
+            name: "enableCamera",
+            description: "Bouton d'activation de la caméra",
+            xpaths: [
+                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/button",
+                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/button"
+            ],
+            selectors: [".camera-enable", "button.primary[type='button']"],
+            textContains: ["Activer", "Camera", "Caméra"],
+            attributes: [{ name: "aria-label", value: "camera" }]
+        },
+        {
+            name: "captureButton",
+            description: "Bouton de capture",
+            xpaths: [
+                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]",
+                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div/div[2]/div/div/div[1]/button[1]"
+            ],
+            selectors: [".capture-button", "button.capture"],
+            textContains: ["Prendre", "Capture", "Photo"],
+            attributes: [{ name: "aria-label", value: "capture" }]
+        },
+        {
+            name: "sendButton",
+            description: "Bouton d'envoi",
+            xpaths: [
+                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[2]/div[2]/button[3]",
+                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[2]/div[2]/button[3]",
+                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[2]/div[2]/button[2]"
+            ],
+            selectors: [".send-button", "button.send"],
+            textContains: ["Envoyer", "Send", "Suivant"],
+            attributes: [{ name: "type", value: "submit" }]
+        },
+        {
+            name: "recipientElement",
+            description: "Élément de liste (destinataire)",
+            xpaths: [
+                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div/ul/li[8]/div",
+                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/form/div/ul/li[8]/div"
+            ],
+            selectors: ["li.recipient", ".recipient-option"],
+            textContains: [],
+            attributes: [{ name: "class", value: "recipient" }]
+        },
+        {
+            name: "confirmButton",
+            description: "Bouton de confirmation final",
+            xpaths: [
+                "/html/body/main/div[1]/div[3]/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button",
+                "/html/body/main/div[1]/div[3]/div/div/div/div[2]/div[1]/div/div/div/div/div[1]/div/form/div[2]/button"
+            ],
+            selectors: ["button.confirm", "form button[type='submit']"],
+            textContains: ["Confirmer", "Valider", "Submit", "Soumettre"],
+            attributes: [{ name: "type", value: "submit" }]
+        }
+    ];
     
-    // Fonction pour trouver un élément en essayant plusieurs XPaths
-    function findElementByMultipleXPaths(xpathArray) {
-        for (const xpath of xpathArray) {
+    // Recherche avancée avec toutes les méthodes disponibles
+    function findElement(elementDef) {
+        // 1. Essayer les XPaths
+        for (const xpath of elementDef.xpaths) {
             const element = getElementByXPath(xpath);
             if (element && isElementVisible(element)) {
                 return element;
             }
         }
+        
+        // 2. Essayer les sélecteurs CSS
+        for (const selector of elementDef.selectors) {
+            const element = getElementBySelector(selector);
+            if (element && isElementVisible(element)) {
+                return element;
+            }
+        }
+        
+        // 3. Essayer de trouver par texte
+        for (const text of elementDef.textContains) {
+            const element = getButtonByText(text);
+            if (element && isElementVisible(element)) {
+                return element;
+            }
+        }
+        
+        // 4. Essayer de trouver par attribut
+        for (const attr of elementDef.attributes) {
+            const element = getElementByAttribute(attr.name, attr.value);
+            if (element && isElementVisible(element)) {
+                return element;
+            }
+        }
+        
+        // 5. Recherche intelligente en dernier recours
+        if (elementDef.name === "enableCamera") {
+            // Chercher le premier bouton visible dans la page
+            const allButtons = Array.from(document.querySelectorAll('button'));
+            const firstVisibleButton = allButtons.find(btn => isElementVisible(btn));
+            return firstVisibleButton;
+        }
+        
         return null;
     }
     
-    // Fonction pour trouver et cliquer sur tous les éléments spécifiques
+    // Fonction pour trouver et cliquer sur des éléments spécifiques (génériquement)
     async function clickAllSpecificElements() {
-        // Utiliser des sélecteurs CSS et des attributs de données pour être moins détectable
-        const containers = document.querySelectorAll('[class*="Ewfl"], [class*="list-container"]');
-        const elementsToClick = [];
+        const specificButtons = [];
         
-        containers.forEach(container => {
-            // Recherche plus générique pour éviter de s'appuyer sur des noms de classe spécifiques
-            const elements = container.querySelectorAll('button, [role="button"], [tabindex="0"]');
-            elements.forEach(element => {
-                // Vérifier si l'élément contient un SVG
-                const svg = element.querySelector('svg');
-                if (svg && (svg.classList.contains('DYSLz') || svg.getAttribute('aria-label') === 'Ajouter')) {
-                    elementsToClick.push(element);
-                }
-            });
+        // 1. Chercher tous les boutons avec des icônes SVG
+        document.querySelectorAll('button svg, [role="button"] svg').forEach(svg => {
+            const button = svg.closest('button') || svg.closest('[role="button"]');
+            if (button && isElementVisible(button)) {
+                specificButtons.push(button);
+            }
         });
         
-        if (elementsToClick.length === 0) {
+        // 2. Chercher des éléments de liste (li) cliquables
+        document.querySelectorAll('li[tabindex="0"], li.clickable, li[role="option"]').forEach(li => {
+            if (isElementVisible(li)) {
+                specificButtons.push(li);
+            }
+        });
+        
+        // 3. Chercher des div cliquables
+        document.querySelectorAll('div[tabindex="0"], div[role="button"], div.clickable').forEach(div => {
+            if (isElementVisible(div)) {
+                specificButtons.push(div);
+            }
+        });
+        
+        if (specificButtons.length === 0) {
             addLog("Aucun élément spécifique trouvé");
             return false;
         }
         
-        addLog(`${elementsToClick.length} éléments spécifiques trouvés`);
+        addLog(`${specificButtons.length} éléments spécifiques trouvés`);
         
-        // Cliquer sur chaque élément avec un délai variable entre les clics
-        for (let i = 0; i < elementsToClick.length; i++) {
+        // Cliquer sur chaque élément
+        for (let i = 0; i < specificButtons.length; i++) {
             if (!isClicking) return false;
             
-            const element = elementsToClick[i];
+            const element = specificButtons[i];
             const clicked = await simulateHumanClick(element);
             
             if (clicked) {
-                addLog(`Élément spécifique ${i+1}/${elementsToClick.length} cliqué`);
+                addLog(`Élément spécifique ${i+1}/${specificButtons.length} cliqué`);
             }
             
-            // Pause aléatoire entre les clics
             await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100));
         }
         
         return true;
     }
     
-    // Fonction principale pour cliquer sur les éléments dans un ordre précis
+    // Fonction principale pour exécuter la séquence de clics
     async function performClicks() {
         if (!isClicking) return;
         
@@ -480,70 +579,53 @@
         updateStatus("En cours d'exécution...", true);
         
         try {
-            // 1. Activer la caméra
-            const cameraButton = findElementByMultipleXPaths(xpathMap.enableCamera);
-            if (cameraButton) {
-                addLog("Activation de la caméra...");
-                await simulateHumanClick(cameraButton);
-                await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
-            } else {
-                addLog("Bouton de caméra non trouvé");
+            // Séquence améliorée avec détection plus robuste
+            for (const elementDef of elementDefinitions) {
+                if (!isClicking) return;
+                
+                addLog(`Recherche de: ${elementDef.description}...`);
+                const element = findElement(elementDef);
+                
+                if (element) {
+                    addLog(`${elementDef.description} trouvé, clic en cours...`);
+                    await simulateHumanClick(element);
+                    
+                    // Si c'est l'élément de liste, essayer également de cliquer sur des éléments spécifiques
+                    if (elementDef.name === "recipientElement") {
+                        await clickAllSpecificElements();
+                    }
+                    
+                    // Pause variable entre les clics
+                    await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 500));
+                } else {
+                    addLog(`${elementDef.description} non trouvé`);
+                    
+                    // Si l'élément de liste n'est pas trouvé, tenter une recherche générique
+                    if (elementDef.name === "recipientElement") {
+                        await clickAllSpecificElements();
+                    }
+                }
             }
             
-            if (!isClicking) return;
-            
-            // 2. Bouton de capture
-            const captureButton = findElementByMultipleXPaths(xpathMap.captureButton);
-            if (captureButton) {
-                addLog("Capture de la photo...");
-                await simulateHumanClick(captureButton);
-                await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
-            } else {
-                addLog("Bouton de capture non trouvé");
-            }
-            
-            if (!isClicking) return;
-            
-            // 3. Bouton d'envoi
-            const sendButton = findElementByMultipleXPaths(xpathMap.sendButton);
-            if (sendButton) {
-                addLog("Envoi de la photo...");
-                await simulateHumanClick(sendButton);
-                await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 1000));
-            } else {
-                addLog("Bouton d'envoi non trouvé");
-            }
-            
-            if (!isClicking) return;
-            
-            // 4. Cliquer sur tous les éléments spécifiques
-            addLog("Recherche des éléments spécifiques...");
-            await clickAllSpecificElements();
-            
-            if (!isClicking) return;
-            
-            // 5. Bouton de confirmation final
-            const confirmButton = findElementByMultipleXPaths(xpathMap.confirmButton);
-            if (confirmButton) {
-                addLog("Confirmation finale...");
-                await simulateHumanClick(confirmButton);
-            } else {
-                addLog("Bouton de confirmation non trouvé");
-            }
-            
-            // Attendre que le site traite les actions
+            // Attendre le traitement du site
             addLog("Attente du traitement...");
-            await new Promise(resolve => setTimeout(resolve, Math.random() * 5000 + 8000));
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 5000 + 5000));
+            
+            // Vérifier à nouveau la présence du premier élément pour savoir si on doit recommencer
+            const firstElement = findElement(elementDefinitions[0]);
             
             if (isClicking) {
-                addLog("Redémarrage du processus...");
+                if (firstElement) {
+                    addLog("Premier élément toujours présent, redémarrage du processus...");
+                } else {
+                    addLog("Processus terminé, redémarrage...");
+                }
                 performClicks();
             }
         } catch (error) {
             addLog(`Erreur: ${error.message}`);
             console.error("Erreur durant le processus:", error);
             
-            // Réessayer après un délai en cas d'erreur
             if (isClicking) {
                 processTimeout = setTimeout(() => {
                     addLog("Tentative de reprise après erreur...");
@@ -562,7 +644,6 @@
             updateStatus("En cours d'exécution...", true);
             addLog("Processus démarré");
             
-            // Démarrer avec un léger délai aléatoire
             setTimeout(() => {
                 performClicks();
             }, Math.random() * 500 + 200);
@@ -584,20 +665,19 @@
         addLog("Processus arrêté");
     });
     
-    // Détection de changement d'onglet ou de fenêtre pour mettre en pause automatiquement
+    // Détection de changement d'onglet
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && isClicking) {
             addLog("Processus mis en pause (onglet inactif)");
-            // Ne pas arrêter complètement, juste mettre en pause
         } else if (!document.hidden && isClicking) {
             addLog("Reprise du processus (onglet actif)");
         }
     });
     
     // Message de bienvenue dans la console
-    console.log("%cAssistant d'automatisation chargé", "color:#4CAF50;font-size:14px;font-weight:bold;");
+    console.log("%cAssistant d'automatisation amélioré chargé", "color:#4CAF50;font-size:14px;font-weight:bold;");
     
-    // Ajout d'un raccourci clavier pour démarrer/arrêter (Alt+S)
+    // Raccourci clavier (Alt+S)
     document.addEventListener('keydown', (e) => {
         if (e.altKey && e.key === 's') {
             if (isClicking) {
@@ -607,4 +687,9 @@
             }
         }
     });
+    
+    // Afficher automatiquement les logs au démarrage
+    setTimeout(() => {
+        document.getElementById('action-logs').parentElement.style.display = 'block';
+    }, 500);
 })();
